@@ -1,3 +1,10 @@
+/* 
+ * File:   main.c
+ * Author: A15153
+ *
+ * Created on 2012/12/06, 16:51
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -121,7 +128,7 @@ int main(int argc, char** argv)
     OSCCONbits.SCS0 = 0;
     OSCCONbits.SCS1 = 0;
     OSCCONbits.IRCF = 7; // HFINTOSC selec
-//    while(!OSCCONbits.IOFS);
+    while(!OSCCONbits.IOFS);
 
     OSCTUNEbits.PLLEN = 1; //64MHz
 
