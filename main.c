@@ -11,6 +11,7 @@
 #define mLED0_Toggle()     mLED0 = !mLED0;
 
 void init_timer(void);
+void init_pwm(void);
 void init_SPI(void);
 /*
  * 
@@ -30,6 +31,7 @@ int main(int argc, char** argv)
     OSCCONbits.IRCF = 0xf; // HFINT 16MHz
 
     init_timer();
+	init_pwm();
 	ei();
 
 
@@ -48,6 +50,34 @@ void init_timer(void)
 	TMR0 = 0;	// clear 8bit counter
     INTCONbits.TMR0IF = 0; // timer0 interrupt flag clear
 	INTCONbits.TMR0IE = 1; // enable timer0  interrupt
+}
+
+void init_pwm(void)
+{
+	TRISC5 = 1; // disable out
+	PWM1CON = 0; // diable PWM1
+
+	PR2 = 200; // Period 20KHz
+
+	PWM1DCH = 0;
+	PWM1DCL = 0<<6;
+
+	PIR1bits.TMR2IF = 0;
+	T2CONbits.T2CKPS = 0; // timer2 prescale 1:1
+	T2CONbits.TMR2ON = 1; // start timer2
+
+	PWM1CONbits.PWM1EN = 1;
+	PWM1CONbits.PWM1OUT = 1;
+
+	while(!PIR1bits.TMR2IF);
+
+	TRISC5 = 0;
+	PWM1CONbits.PWM1OE = 1;
+
+
+	PWM1DCH = 20;
+
+
 }
 
 #if 0
@@ -82,7 +112,7 @@ void interrupt int_main(void)
 
         if(count>=31){
             count = 0;
-		mLED0_Toggle();
+			mLED0_Toggle();
 //            SendFlg=1;
         }
     }
