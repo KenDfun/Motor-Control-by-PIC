@@ -13,11 +13,21 @@
 void init_timer(void);
 void init_pwm(void);
 void init_SPI(void);
+void init_uart(void);
+
+#define PWM_PERIOD_AT_20K 200
+
+int SendFlg=0;
+int RcvFlg=0;
+char RcvData;
+unsigned char PwmDuty=0;
 /*
  * 
  */
 int main(int argc, char** argv)
 {
+//	static char SendCh='a';
+	
     // Setup Port
 	TRISA4 = 0;	// clkout
 	TRISC6 = 0; // LED out
@@ -26,16 +36,51 @@ int main(int argc, char** argv)
 
 	ANSC6 = 0;
 	ANSA4 = 0;
+	ANSB5 = 0;
 
     // Setup Clock
     OSCCONbits.IRCF = 0xf; // HFINT 16MHz
 
     init_timer();
 	init_pwm();
+	init_uart();
+	
 	ei();
 
+	while(1){
+#if 0 // Test for TX
+		if(SendFlg){
+			di();
+			SendFlg = 0;
+			ei();
 
-	while(1);
+			TXREG = SendCh++;
+			if(SendCh>'z'){
+				SendCh='a';
+			}
+		}
+#endif
+		if(RcvFlg){
+			di();
+			RcvFlg=0;
+			ei();
+
+			if(RcvData=='a'){
+				if(PwmDuty < (PWM_PERIOD_AT_20K/2) ){
+					PwmDuty+=10;
+					PWM1DCH = PwmDuty;
+				}
+			}
+			else if(RcvData=='b'){
+				if(PwmDuty >=10){
+					PwmDuty-=10;
+					PWM1DCH = PwmDuty;
+				}
+			}
+
+			TXREG = RcvData;
+		}
+	}
 	
 	return (EXIT_SUCCESS);
 }
@@ -57,7 +102,7 @@ void init_pwm(void)
 	TRISC5 = 1; // disable out
 	PWM1CON = 0; // diable PWM1
 
-	PR2 = 200; // Period 20KHz
+	PR2 = PWM_PERIOD_AT_20K; // Period 20KHz
 
 	PWM1DCH = 0;
 	PWM1DCL = 0<<6;
@@ -74,11 +119,29 @@ void init_pwm(void)
 	TRISC5 = 0;
 	PWM1CONbits.PWM1OE = 1;
 
-
-	PWM1DCH = 20;
+	PwmDuty = 0;
+	PWM1DCH = PwmDuty;
 
 
 }
+
+void init_uart(void)
+{
+	BAUDCONbits.BRG16 = 0;
+	TXSTAbits.SYNC = 0;
+	TXSTAbits.BRGH = 0;
+	SPBRGL = 25;
+
+	RCSTAbits.SPEN = 1;
+
+	TXSTAbits.TXEN = 1;
+
+	PIE1bits.RCIE = 1; // Allow Receive Interrupt
+	INTCONbits.PEIE = 1; // allow perepheral interrupt
+
+	RCSTAbits.CREN = 1;
+}
+
 
 #if 0
 void init_SPI(void)
@@ -102,6 +165,7 @@ void init_SPI(void)
 }
 #endif
 
+
 void interrupt int_main(void)
 {
     static unsigned int count=0;
@@ -113,9 +177,19 @@ void interrupt int_main(void)
         if(count>=31){
             count = 0;
 			mLED0_Toggle();
-//            SendFlg=1;
+			SendFlg=1;
         }
     }
+	else if(RCIE && RCIF){
+		if(RCSTAbits.FERR){
+			while(1);
+		}
+		else if(RCSTAbits.OERR){
+			while(1);
+		}
+		RcvData = RCREG;
+		RcvFlg = 1;
+	}
     else{
         while(1);
     }
