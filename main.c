@@ -26,7 +26,7 @@ unsigned char PwmDuty=0;
  */
 int main(int argc, char** argv)
 {
-//	static char SendCh='a';
+	static char SendCh='a';
 	
     // Setup Port
 	TRISA4 = 0;	// clkout
@@ -48,7 +48,7 @@ int main(int argc, char** argv)
 	ei();
 
 	while(1){
-#if 0 // Test for TX
+#if 1 // Test for TX
 		if(SendFlg){
 			di();
 			SendFlg = 0;
@@ -93,7 +93,7 @@ void init_timer(void)
 	OPTION_REGbits.PS = 7; // 1:256
 
 	TMR0 = 0;	// clear 8bit counter
-    INTCONbits.TMR0IF = 0; // timer0 interrupt flag clear
+        INTCONbits.TMR0IF = 0; // timer0 interrupt flag clear
 	INTCONbits.TMR0IE = 1; // enable timer0  interrupt
 }
 
@@ -127,10 +127,11 @@ void init_pwm(void)
 
 void init_uart(void)
 {
-	BAUDCONbits.BRG16 = 0;
+        // 115200bps
+	BAUDCONbits.BRG16 = 1;
 	TXSTAbits.SYNC = 0;
-	TXSTAbits.BRGH = 0;
-	SPBRGL = 25;
+	TXSTAbits.BRGH = 1;
+	SPBRGL = 34;
 
 	RCSTAbits.SPEN = 1;
 
