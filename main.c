@@ -56,7 +56,7 @@ int main(int argc, char** argv)
 	ANSA4 = 0;
 	ANSB5 = 0;
         ANSC3 = 0;
-
+    //    LATC5=1;
     // Setup Clock
     OSCCONbits.IRCF = 0xf; // HFINT 16MHz
 
@@ -70,39 +70,7 @@ int main(int argc, char** argv)
         ei();
 
 	while(1){
-#if 0 // Test for TX
-		if(SendFlg){
-			di();
-			SendFlg = 0;
-			ei();
 
-			TXREG = SendCh++;
-			if(SendCh>'z'){
-				SendCh='a';
-			}
-		}
-
-		if(RcvFlg){
-			di();
-			RcvFlg=0;
-			ei();
-
-			if(RcvData=='a'){
-				if(PwmDuty < (PWM_PERIOD_AT_20K/2) ){
-					PwmDuty+=10;
-					PWM1DCH = PwmDuty;
-				}
-			}
-			else if(RcvData=='b'){
-				if(PwmDuty >=10){
-					PwmDuty-=10;
-					PWM1DCH = PwmDuty;
-				}
-			}
-
-			TXREG = RcvData;
-	
-        #endif
 
             if(RcvFlg){
                 di();
@@ -135,6 +103,22 @@ void procCommand(int num)
 
         case CMD_NUM_OFF_LED1:
             mLED1_Off();
+            result = 1;
+            break;
+
+        case CMD_NUM_UP_PWM1:
+            if(PwmDuty<200){
+                PwmDuty += 0x8;
+            }
+            PWM1DCH = PwmDuty;
+            result = 1;
+            break;
+
+        case CMD_NUM_DOWN_PWM1:
+            if(PwmDuty>=0x8){
+                PwmDuty -= 0x8;
+            }
+            PWM1DCH = PwmDuty;
             result = 1;
             break;
 
@@ -200,7 +184,7 @@ void init_pwm(void)
 	TRISC5 = 0;
 	PWM1CONbits.PWM1OE = 1;
 
-	PwmDuty = 0;
+	PwmDuty = 0x20;
 	PWM1DCH = PwmDuty;
 
 
