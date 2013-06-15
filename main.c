@@ -5,15 +5,26 @@
 #include "config_bit.h"
 
 /** LED ************************************************************/
-#define mLED0				LATC6
-#define mGetLED0()			mLED0
-#define mLED0_On()			mLED0 = 1;
-#define mLED0_Toggle()     mLED0 = !mLED0;
+#define mLED0			LATC6
+#define mGetLED0()		mLED0
+#define mLED0_On()		mLED0 = 1;
+#define mLED0_Toggle()          mLED0 = !mLED0;
+
+#define mLED1			LATC4
+#define mGetLED1()		mLED1
+#define mLED1_On()		mLED1 = 1;
+#define mLED1_Off()		mLED1 = 0;
+#define mLED1_Toggle()          mLED1 = !mLED1;
 
 void init_timer(void);
 void init_pwm(void);
 void init_SPI(void);
 void init_uart(void);
+
+void sendUartStr(char *str);
+void sendUartCh(char ch);
+
+void procCommand(int num);
 
 #define PWM_PERIOD_AT_20K 200
 
@@ -21,22 +32,30 @@ int SendFlg=0;
 int RcvFlg=0;
 char RcvData;
 unsigned char PwmDuty=0;
+
+char tmpBuf[15];
 /*
  * 
  */
 int main(int argc, char** argv)
 {
-	static char SendCh='a';
-	
+//	static char SendCh='a';
+    int num;
+
+
     // Setup Port
 	TRISA4 = 0;	// clkout
 	TRISC6 = 0; // LED out
+        TRISC4 = 0; // LED out
 	TRISB5 = 1; // Uart RX
 	TRISB7 = 0; // Uart TX
+        TRISC5 = 0; //PWM1 out
+        TRISC3 = 0; //PWM2 out
 
 	ANSC6 = 0;
 	ANSA4 = 0;
 	ANSB5 = 0;
+        ANSC3 = 0;
 
     // Setup Clock
     OSCCONbits.IRCF = 0xf; // HFINT 16MHz
@@ -44,11 +63,14 @@ int main(int argc, char** argv)
     init_timer();
 	init_pwm();
 	init_uart();
-	
-	ei();
+        clearBuf();
+
+        sendUartStr((char *)"Start up!\r\n");
+
+        ei();
 
 	while(1){
-#if 1 // Test for TX
+#if 0 // Test for TX
 		if(SendFlg){
 			di();
 			SendFlg = 0;
@@ -59,7 +81,7 @@ int main(int argc, char** argv)
 				SendCh='a';
 			}
 		}
-#endif
+
 		if(RcvFlg){
 			di();
 			RcvFlg=0;
@@ -79,10 +101,69 @@ int main(int argc, char** argv)
 			}
 
 			TXREG = RcvData;
-		}
-	}
+	
+        #endif
+
+            if(RcvFlg){
+                di();
+                RcvFlg=0;
+                ei();
+
+                sendUartCh(RcvData);
+                num = addChkBuf(RcvData);
+                if(num!=-1){
+                    procCommand(num);
+
+                }
+        }
+    }
 	
 	return (EXIT_SUCCESS);
+}
+
+void procCommand(int num)
+{
+    int result=0;
+                sprintf(tmpBuf,"%d:\r\n",num);
+                sendUartStr(tmpBuf);
+
+    switch(num){
+        case CMD_NUM_ON_LED1:
+            mLED1_On();
+            result = 1;
+            break;
+
+        case CMD_NUM_OFF_LED1:
+            mLED1_Off();
+            result = 1;
+            break;
+
+        default:
+            result =0;
+    }
+    
+    if(result){
+        sendUartStr((char *)"(OK)");
+    }
+    else{
+        sendUartStr((char *)"(ERR)");
+    }
+
+}
+
+void sendUartCh(char ch)
+{
+    while (!TXIF);
+    TXREG = ch;
+}
+
+void sendUartStr(char *str)
+{
+    int i=0;
+
+    while(str[i]!='\0'){
+        sendUartCh(str[i++]);
+    }
 }
 
 void init_timer(void)
@@ -181,16 +262,16 @@ void interrupt int_main(void)
 			SendFlg=1;
         }
     }
-	else if(RCIE && RCIF){
-		if(RCSTAbits.FERR){
-			while(1);
-		}
-		else if(RCSTAbits.OERR){
-			while(1);
-		}
-		RcvData = RCREG;
-		RcvFlg = 1;
-	}
+    else if(RCIE && RCIF){
+            if(RCSTAbits.FERR){
+                    while(1);
+            }
+            else if(RCSTAbits.OERR){
+                    while(1);
+            }
+            RcvData = RCREG;
+            RcvFlg = 1;
+    }
     else{
         while(1);
     }

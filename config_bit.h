@@ -36,6 +36,23 @@ extern "C" {
 #pragma config LVP = OFF        // Low-Voltage Programming Enable (High-voltage on MCLR/VPP must be used for programming)
 
 
+void putBuf(char ch);
+void clearBuf(void);
+int chkBuf(void);
+int addChkBuf(char ch);
+
+enum CMD_NUM {
+    CMD_NUM_ON_LED1 = 0,
+    CMD_NUM_ON_LED2,
+    CMD_NUM_ON_LED3,
+    CMD_NUM_OFF_LED1,
+    CMD_NUM_OFF_LED2,
+    CMD_NUM_OFF_LED3,
+    CMD_NUM_UP_PWM1,
+    CMD_NUM_DOWN_PWM1,
+
+};
+
 
 
 #ifdef	__cplusplus
