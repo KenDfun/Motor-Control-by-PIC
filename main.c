@@ -29,11 +29,23 @@ void procCommand(int num);
 #define PWM_PERIOD_AT_20K 200
 
 int SendFlg=0;
-int RcvFlg=0;
+
 char RcvData;
 unsigned char PwmDuty=0;
 
 char tmpBuf[15];
+
+typedef enum {
+    STATE_RCV_INIT = 0,
+    STATE_RCV_WAIT_COMMAND,
+    STATE_RCV_GET_COMMAND
+} STATE_RCV;
+
+STATE_RCV StateRcv = STATE_RCV_INIT;
+int RcvStartFlg = 0;
+int RcvFlg = 0;
+int RcvCount;
+
 /*
  * 
  */
@@ -76,6 +88,20 @@ int main(int argc, char** argv)
                 di();
                 RcvFlg=0;
                 ei();
+
+                switch(StateRcv){
+                case STATE_RCV_INIT:
+                    RcvCount = 0;
+                    StateRcv=STATE_RCV_WAIT_COMMAND;
+                    break;
+
+                case STATE_RCV_WAIT_COMMAND:
+                    if(RcvData=='('){
+                        StateRcv=STATE_RCV_GET_COMMAND;
+                    }
+                    break;
+                    
+                }
 
                 sendUartCh(RcvData);
                 num = addChkBuf(RcvData);
