@@ -10,14 +10,14 @@ char ChBuf[MAX_CH_BUF];
 int BufCnt=0;
 
 char CmdBuf[MAX_CMD_NUM][MAX_CH_BUF]={
-    "(ON:LED1)",
-    "(ON:LED2)",
-    "(ON:LED3)",
-    "(OFF:LED1)",
-    "(OFF:LED2)",
-    "(OFF:LED3)",
-    "(UP:PWM1)",
-    "(DOWN:PWM1)",
+    "ON:LED1",
+    "ON:LED2",
+    "ON:LED3",
+    "OFF:LED1",
+    "OFF:LED2",
+    "OFF:LED3",
+    "UP:PWM1",
+    "DOWN:PWM1",
     ""
 };
 

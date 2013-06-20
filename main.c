@@ -81,6 +81,11 @@ int main(int argc, char** argv)
 
         ei();
 
+        RcvCount = 0;
+        StateRcv=STATE_RCV_WAIT_COMMAND;
+        clearBuf();
+
+
 	while(1){
 
 
@@ -90,25 +95,34 @@ int main(int argc, char** argv)
                 ei();
 
                 switch(StateRcv){
-                case STATE_RCV_INIT:
-                    RcvCount = 0;
-                    StateRcv=STATE_RCV_WAIT_COMMAND;
-                    break;
-
                 case STATE_RCV_WAIT_COMMAND:
                     if(RcvData=='('){
                         StateRcv=STATE_RCV_GET_COMMAND;
                     }
                     break;
-                    
+
+                case STATE_RCV_GET_COMMAND:
+                    if(RcvData==')'){
+                        StateRcv=STATE_RCV_WAIT_COMMAND;
+                        RcvCount = 0;
+
+                        num=chkBuf();
+                        if(num!=-1){
+                            procCommand(num);
+
+                        }
+                    }
+                    else{
+                        putBuf(RcvData);
+                    }
+                    break;
+
+                default:
+                    break;
+
                 }
 
-                sendUartCh(RcvData);
-                num = addChkBuf(RcvData);
-                if(num!=-1){
-                    procCommand(num);
-
-                }
+//                sendUartCh(RcvData);
         }
     }
 	
