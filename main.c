@@ -111,6 +111,7 @@ int main(int argc, char** argv)
                             procCommand(num);
 
                         }
+                        clearBuf();
                     }
                     else{
                         putBuf(RcvData);
